@@ -34,6 +34,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api', entryRoutes);
+app.use('/', entryRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
