@@ -8,24 +8,11 @@ import entryRoutes from './routes/entryRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const allowedOrigins = process.env.CLIENT_URL
-  ? process.env.CLIENT_URL.split(',').map((url) => url.trim().replace(/\/$/, ''))
-  : ['http://localhost:5173'];
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      const cleanOrigin = origin.replace(/\/$/, '');
-      if (
-        allowedOrigins.includes(cleanOrigin) ||
-        cleanOrigin.endsWith('.vercel.app') ||
-        allowedOrigins.includes('*')
-      ) {
-        return callback(null, true);
-      }
-      return callback(null, true);
-    },
+    origin: CLIENT_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
