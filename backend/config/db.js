@@ -8,12 +8,11 @@ export const connectDB = async () => {
 
   try {
     const conn = await mongoose.connect(uri);
-    console.log(`[Database] MongoDB connected successfully to database: "${conn.connection.name}" at ${conn.connection.host}:${conn.connection.port}`);
+    console.log(`[Database] MongoDB connected successfully to database: "${conn.connection.name}"`);
     return conn;
   } catch (error) {
-    console.error('[Database Error] Failed to connect to local MongoDB:');
+    console.error('[Database Error] Failed to connect to MongoDB:');
     console.error(error.message);
-    console.error('Please ensure MongoDB Community Server is installed and running on mongodb://127.0.0.1:27017');
     throw error;
   }
 };
