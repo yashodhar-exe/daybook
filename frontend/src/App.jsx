@@ -5,6 +5,7 @@ import { DiaryHome } from './pages/DiaryHome';
 import { EntryEditor } from './pages/EntryEditor';
 import { EntryView } from './pages/EntryView';
 import { DeleteModal } from './components/DeleteModal';
+import { Toast } from './components/Toast';
 import {
   fetchEntries,
   fetchEntryById,
@@ -38,10 +39,7 @@ export function App() {
   const searchInputRef = useRef(null);
 
   const showAlert = (text, type = 'success') => {
-    setAlert({ text, type });
-    setTimeout(() => {
-      setAlert(null);
-    }, 4500);
+    setAlert({ id: Date.now(), text, type });
   };
 
   const loadEntries = useCallback(async () => {
@@ -170,24 +168,6 @@ export function App() {
 
       
       <main className="app-main">
-        
-        {alert && (
-          <div className="content-container" style={{ marginBottom: '1rem' }}>
-            <div className={`alert-banner ${alert.type}`}>
-              <span>{alert.text}</span>
-              <button
-                className="btn-icon"
-                style={{ width: '20px', height: '20px' }}
-                onClick={() => setAlert(null)}
-                type="button"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        )}
-
-        
         {view === 'home' && (
           <DiaryHome
             entries={entries}
@@ -270,6 +250,15 @@ export function App() {
         }}
         isDeleting={isDeleting}
       />
+
+      {alert && (
+        <Toast
+          key={alert.id || alert.text}
+          message={alert.text}
+          type={alert.type}
+          onClose={() => setAlert(null)}
+        />
+      )}
     </div>
   );
 }

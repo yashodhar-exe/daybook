@@ -1189,3 +1189,85 @@ button, input, textarea, select {
   justify-content: center;
   flex-shrink: 0;
 }
+
+.toast-pill {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translate(-50%, 0);
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.95rem 0.55rem 0.85rem;
+  background-color: #1a1b1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+  max-width: calc(100vw - 2rem);
+}
+
+.toast-pill-enter {
+  animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-pill-exit {
+  animation: toastSlideDown 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 28px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes toastSlideDown {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 28px);
+  }
+}
+
+.toast-pill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toast-pill-text {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #f4f4f5;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.toast-pill-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 2px;
+  margin-left: 0.35rem;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.toast-pill-close:hover {
+  color: #ffffff;
+}
