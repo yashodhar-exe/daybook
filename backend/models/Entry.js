@@ -19,6 +19,10 @@ const attachmentSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    data: {
+      type: String,
+      default: '',
+    },
     mimeType: {
       type: String,
       default: '',

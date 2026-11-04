@@ -237,7 +237,7 @@ export const AttachmentManager = ({
           {existingImages.map((img, index) => (
             <div key={`existing-img-${index}`} className="gallery-thumb-item">
               <img
-                src={getImageUrl(img.filename || img.url)}
+                src={getImageUrl(img)}
                 alt={img.name || 'Attachment'}
               />
               <button

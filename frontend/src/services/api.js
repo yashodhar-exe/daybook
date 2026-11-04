@@ -78,8 +78,14 @@ export const getDownloadUrl = (entryId, filename) => {
   return `${API_BASE_URL}/entries/${entryId}/attachments/${encodeURIComponent(filename)}`;
 };
 
-export const getImageUrl = (filename) => {
-  if (!filename) return '';
-  if (filename.startsWith('http://') || filename.startsWith('https://')) return filename;
-  return `${API_BASE_URL}/uploads/${encodeURIComponent(filename)}`;
+export const getImageUrl = (attachmentOrFilename) => {
+  if (!attachmentOrFilename) return '';
+  if (typeof attachmentOrFilename === 'object') {
+    if (attachmentOrFilename.data) return attachmentOrFilename.data;
+    if (attachmentOrFilename.url) return getImageUrl(attachmentOrFilename.url);
+    if (attachmentOrFilename.filename) return getImageUrl(attachmentOrFilename.filename);
+  }
+  const str = String(attachmentOrFilename);
+  if (str.startsWith('data:') || str.startsWith('http://') || str.startsWith('https://')) return str;
+  return `${API_BASE_URL}/uploads/${encodeURIComponent(str)}`;
 };

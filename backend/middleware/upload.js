@@ -1,15 +1,4 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-export const UPLOADS_DIR = path.resolve(__dirname, '../uploads');
-
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -34,22 +23,10 @@ const ALLOWED_EXTENSIONS = new Set([
   '.pdf', '.txt', '.md', '.csv', '.json', '.doc', '.docx', '.xls', '.xlsx', '.zip'
 ]);
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOADS_DIR);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const cleanBase = path.basename(file.originalname, ext)
-      .replace(/[^a-zA-Z0-9_-]/g, '_')
-      .slice(0, 40);
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${uniqueSuffix}-${cleanBase}${ext}`);
-  },
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase();
+  const ext = (file.originalname ? file.originalname.slice(file.originalname.lastIndexOf('.')) : '').toLowerCase();
   if (ALLOWED_EXTENSIONS.has(ext) || ALLOWED_MIME_TYPES.has(file.mimetype)) {
     cb(null, true);
   } else {
@@ -65,22 +42,4 @@ export const upload = multer({
   },
 });
 
-export const deleteUploadedFile = (filename) => {
-  if (!filename) return;
-  const safeFilename = path.basename(filename);
-  const filePath = path.join(UPLOADS_DIR, safeFilename);
-
-  if (!filePath.startsWith(UPLOADS_DIR)) {
-    console.warn(`Prevented path traversal attempt for: ${filename}`);
-    return;
-  }
-
-  if (fs.existsSync(filePath)) {
-    try {
-      fs.unlinkSync(filePath);
-      console.log(`[Storage] Deleted file: ${safeFilename}`);
-    } catch (err) {
-      console.error(`[Storage Error] Failed to delete file ${safeFilename}:`, err.message);
-    }
-  }
-};
+export const deleteUploadedFile = () => {};

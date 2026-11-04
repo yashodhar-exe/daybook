@@ -117,7 +117,7 @@ export const EntryView = ({
         {images.length > 0 && (
           <div className="reading-image-gallery">
             {images.map((img, idx) => {
-              const fullUrl = getImageUrl(img.filename || img.url);
+              const fullUrl = getImageUrl(img);
               return (
                 <div key={idx} className="reading-image-item" onClick={() => window.open(fullUrl, '_blank')}>
                   <img src={fullUrl} alt={img.name || 'Journal picture'} />

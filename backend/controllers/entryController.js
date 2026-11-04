@@ -1,8 +1,7 @@
 import mongoose from 'mongoose';
 import path from 'path';
-import fs from 'fs';
 import { Entry } from '../models/Entry.js';
-import { UPLOADS_DIR, deleteUploadedFile } from '../middleware/upload.js';
+import { deleteUploadedFile } from '../middleware/upload.js';
 
 const escapeRegex = (str) => {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -184,14 +183,23 @@ export const createEntry = async (req, res) => {
     if (req.files && Array.isArray(req.files)) {
       for (const file of req.files) {
         const isImage = file.mimetype.startsWith('image/');
+        const ext = path.extname(file.originalname).toLowerCase();
+        const cleanBase = path.basename(file.originalname, ext)
+          .replace(/[^a-zA-Z0-9_-]/g, '_')
+          .slice(0, 40);
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        const safeFilename = `${uniqueSuffix}-${cleanBase}${ext}`;
+        const base64Data = file.buffer ? `data:${file.mimetype};base64,${file.buffer.toString('base64')}` : '';
+
         fileAttachments.push({
           type: isImage ? 'image' : 'file',
           name: file.originalname,
-          filename: file.filename,
-          url: `/api/uploads/${file.filename}`,
+          filename: safeFilename,
+          url: isImage ? base64Data : `/api/uploads/${safeFilename}`,
+          data: base64Data,
           mimeType: file.mimetype,
           size: file.size,
-          path: file.filename,
+          path: safeFilename,
         });
       }
     }
@@ -278,14 +286,23 @@ export const updateEntry = async (req, res) => {
     if (req.files && Array.isArray(req.files)) {
       for (const file of req.files) {
         const isImage = file.mimetype.startsWith('image/');
+        const ext = path.extname(file.originalname).toLowerCase();
+        const cleanBase = path.basename(file.originalname, ext)
+          .replace(/[^a-zA-Z0-9_-]/g, '_')
+          .slice(0, 40);
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        const safeFilename = `${uniqueSuffix}-${cleanBase}${ext}`;
+        const base64Data = file.buffer ? `data:${file.mimetype};base64,${file.buffer.toString('base64')}` : '';
+
         newFileAttachments.push({
           type: isImage ? 'image' : 'file',
           name: file.originalname,
-          filename: file.filename,
-          url: `/api/uploads/${file.filename}`,
+          filename: safeFilename,
+          url: isImage ? base64Data : `/api/uploads/${safeFilename}`,
+          data: base64Data,
           mimeType: file.mimetype,
           size: file.size,
-          path: file.filename,
+          path: safeFilename,
         });
       }
     }
@@ -384,16 +401,22 @@ export const downloadAttachment = async (req, res) => {
       });
     }
 
-    const filePath = path.join(UPLOADS_DIR, safeFilename);
-
-    if (!filePath.startsWith(UPLOADS_DIR) || !fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: 'File not found on server.',
-      });
+    const rawData = attachment.data || (attachment.url?.startsWith('data:') ? attachment.url : null);
+    if (rawData) {
+      const matches = rawData.match(/^data:([^;]+);base64,(.+)$/);
+      if (matches) {
+        const contentType = matches[1];
+        const buffer = Buffer.from(matches[2], 'base64');
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${attachment.name || safeFilename}"`);
+        return res.send(buffer);
+      }
     }
 
-    return res.download(filePath, attachment.name || safeFilename);
+    return res.status(404).json({
+      success: false,
+      message: 'File not found.',
+    });
   } catch (error) {
     console.error('[Download Error] downloadAttachment failed:', error.message);
     return res.status(500).json({
@@ -403,20 +426,33 @@ export const downloadAttachment = async (req, res) => {
   }
 };
 
-export const serveUploadedFile = (req, res) => {
+export const serveUploadedFile = async (req, res) => {
   try {
     const { filename } = req.params;
     const safeFilename = path.basename(filename);
-    const filePath = path.join(UPLOADS_DIR, safeFilename);
 
-    if (!filePath.startsWith(UPLOADS_DIR) || !fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: 'File not found.',
-      });
+    const entry = await Entry.findOne({ 'attachments.filename': safeFilename }).lean();
+    if (entry) {
+      const attachment = entry.attachments.find((a) => a.filename === safeFilename);
+      if (attachment) {
+        const rawData = attachment.data || (attachment.url?.startsWith('data:') ? attachment.url : null);
+        if (rawData) {
+          const matches = rawData.match(/^data:([^;]+);base64,(.+)$/);
+          if (matches) {
+            const contentType = matches[1];
+            const buffer = Buffer.from(matches[2], 'base64');
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            return res.send(buffer);
+          }
+        }
+      }
     }
 
-    return res.sendFile(filePath);
+    return res.status(404).json({
+      success: false,
+      message: 'File not found.',
+    });
   } catch (error) {
     console.error('[Serve File Error]:', error.message);
     return res.status(500).json({
